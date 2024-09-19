@@ -1,5 +1,5 @@
 .section  .ivt,"a",%progbits
-.word  0
+.word  0x20001070 /* stack pointer initial value */
 .word  Reset_Handler
 .word  NMI_Handler
 .word  HardFault_Handler
