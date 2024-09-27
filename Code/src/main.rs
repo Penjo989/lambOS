@@ -1,20 +1,58 @@
-#![no_std]
+
 #![no_main]
+#![no_std]
 
-// pick a panicking behavior
-use panic_halt as _; // you can put a breakpoint on `rust_begin_unwind` to catch panics
-// use panic_abort as _; // requires nightly
-// use panic_itm as _; // logs messages over ITM; requires ITM support
-// use panic_semihosting as _; // logs messages to the host stderr; requires a debugger
+use panic_halt as _;
 
-use cortex_m::asm;
-use cortex_m_rt::entry;
+use core::fmt::Write;
+
+use cortex_m::peripheral::syst::SystClkSource;
+use cortex_m_rt::{entry, exception};
+use cortex_m_semihosting::{
+    debug,
+    hio::{self, HStdout},
+};
 
 #[entry]
 fn main() -> ! {
-    asm::nop(); // To not have main optimize to abort in release mode, remove when you add code
+    let p = cortex_m::Peripherals::take().unwrap();
+    let mut syst = p.SYST;
 
-    loop {
-        // your code goes here
+    // configures the system timer to trigger a SysTick exception every second
+    syst.set_clock_source(SystClkSource::Core);
+    // this is configured for the LM3S6965 which has a default CPU clock of 12 MHz
+    syst.set_reload(12_000_000);
+    syst.clear_current();
+    syst.enable_counter();
+    syst.enable_interrupt();
+
+    loop {}
+}
+
+
+const RCC_BASE: usize = 0x40023800;
+const RCC_AHB1ENR: *mut u32 = (RCC_BASE + 0x30) as *mut u32;
+const GPIOD_BASE: usize = 0x40020C00;
+const GPIOD_MODER: *mut u32 = GPIOD_BASE as *mut u32;
+const GPIOD_BSRR: *mut u32 = (GPIOD_BASE + 0x18) as *mut u32;
+
+
+#[exception]
+fn SysTick() {
+    unsafe {
+        // Enable clock for GPIOD
+        let rcc_ahb1enr = &mut *RCC_AHB1ENR;
+        *rcc_ahb1enr |= 0xf;
+
+        // Configure GPIOD pins mode
+        let gpiod_moder = &mut *GPIOD_MODER;
+        *gpiod_moder = 0x55555555;
+
+        // Turn on LEDs
+        let gpiod_bsrr = &mut *GPIOD_BSRR;
+        *gpiod_bsrr = 0xffff;
     }
+
+    // Infinite loop to prevent exit
+    loop {}
 }
