@@ -2,7 +2,7 @@
 authors = ["d0xical"]
 edition = "2018"
 readme = "README.md"
-name = "app"
+name = "lambos"
 version = "0.1.0"
 
 [dependencies]
@@ -19,7 +19,7 @@ version = "0.22.0"
 
 # this lets you use `cargo fix`!
 [[bin]]
-name = "app"
+name = "lambos"
 test = false
 bench = false
 
