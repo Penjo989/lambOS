@@ -8,8 +8,8 @@ const BOOT_OFFSET: u32 = 0x1000;
 
 extern "C" {
     static mut __sdata: u8;
-    static mut _sboot: u8;
-    static mut _eboot: u8;
+    static mut __sboot: u8;
+    static mut __eboot: u8;
 }
 
 pub extern "C" fn boot() -> () {
@@ -20,7 +20,7 @@ pub extern "C" fn boot() -> () {
 
         let data_start = code_start as *const u32 as *mut  u8;  
         let reset_ptr = (lambos_reset as *const u8).sub(1);
-        let reset_size: u16 = (addr_of!(_eboot) as *const u8 as u16) - (addr_of!(_sboot) as *const u8 as u16);
+        let reset_size = get_reset_function_size();
         hprintln!("Size of function @ {:x}", reset_size).unwrap();
         
         for i in 0..reset_size {
@@ -32,6 +32,10 @@ pub extern "C" fn boot() -> () {
         let reset_func: fn(fn(&str)) = core::mem::transmute(code_start | 1);
         reset_func(semihosting_print);
     }
+}
+
+unsafe fn get_reset_function_size() -> u16 {
+    (addr_of!(__eboot) as *const u8 as u16) - (addr_of!(__sboot) as *const u8 as u16)
 }
 
 pub fn semihosting_print(message: &str) {

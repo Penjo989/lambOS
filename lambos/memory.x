@@ -10,9 +10,9 @@ MEMORY
 SECTIONS 
 {
    .boot __etext : {
-      _sboot = .;
+      __sboot = .;
       *(.boot);
-      _eboot = .;
+      __eboot = .;
    } >FLASH
 }
 
